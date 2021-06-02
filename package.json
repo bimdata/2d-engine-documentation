@@ -1,0 +1,18 @@
+{
+  "name": "documentation-2d-engine",
+  "version": "0.0.1",
+  "description": "The BIMData 2D Engine documentation",
+  "main": "index.js",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "author": "BIMData.io",
+  "license": "ISC",
+  "devDependencies": {
+    "vuepress": "2.0.0-beta.16"
+  },
+  "dependencies": {
+    "@bimdata/2d-engine": "1.0.2"
+  }
+}

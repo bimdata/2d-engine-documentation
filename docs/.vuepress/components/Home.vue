@@ -4,15 +4,15 @@
     <div>
       The BIMData.io 2D Engine is a performant WebGL based 2D renderer that is able to draw from a simple lines to an entire building with a huge amount of object.
     </div>
-    <img src="/assets/img/building.gif">
+    <img :src="$withBase('/assets/img/building.gif')">
     <div>
       The simple API allow to quickly add addons like texts, additional shapes and so on.
     </div>
-    <img src="/assets/img/plugins.gif">
+    <img :src="$withBase('/assets/img/plugins.gif')">
     <div>
       Drawn shapes are dynamics and can be edited on the fly.
     </div>
-    <img src="/assets/img/plugin.measures.gif">
+    <img :src="$withBase('/assets/img/plugin.measures.gif')">
     <div>
       <b>Try it !</b>
     </div>

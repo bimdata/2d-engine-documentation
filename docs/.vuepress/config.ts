@@ -7,10 +7,13 @@ export default defineUserConfig<DefaultThemeOptions>({
   title: '2D Engine',
   description: 'The official documentation for the BIMData.io 2D Engine.',
 
+  base: "/2d-engine-documentation/",
+
   clientAppEnhanceFiles: path.resolve(__dirname, './components/index.ts'),
 
   themeConfig: {
     logo: '/assets/img/documentation.svg',
+    repo: "bimdata/2d-engine-documentation",
 
     navbar: [
       {

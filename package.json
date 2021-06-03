@@ -11,8 +11,5 @@
   "license": "ISC",
   "devDependencies": {
     "vuepress": "2.0.0-beta.16"
-  },
-  "dependencies": {
-    "@bimdata/2d-engine": "1.0.2"
   }
 }

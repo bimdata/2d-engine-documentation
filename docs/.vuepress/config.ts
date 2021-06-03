@@ -9,6 +9,10 @@ export default defineUserConfig<DefaultThemeOptions>({
 
   base: "/2d-engine-documentation/",
 
+  head: [
+    ['link', { rel: 'icon', href: '/assets/img/favicon.svg', type: "image/svg+xml" }],
+  ],
+
   clientAppEnhanceFiles: path.resolve(__dirname, './components/index.ts'),
 
   themeConfig: {

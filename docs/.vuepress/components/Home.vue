@@ -18,9 +18,12 @@
 
 
 <style>
+.home {
+  text-align: center;
+}
+
 .home img, canvas {
     margin: 24px;
-
 }
 
 .home canvas {

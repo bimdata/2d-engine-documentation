@@ -124,3 +124,7 @@ This simple example shows how to load the engine with two simple objects and int
 The result:
 
 ![simple example](/2d-engine-documentation/assets/img/simpleExample.gif)
+
+:::tip
+[Try it online !](https://codepen.io/bimdata/pen/poeLjyd)
+:::

@@ -257,6 +257,10 @@ const model = viewer.scene.addModel({
 });
 ```
 
+:::tip
+Geometries can be edited on the fly. To see how, [try it here](https://codepen.io/bimdata/pen/qBroOoW).
+:::
+
 ### Events
 
 The following events are emitted by the 2D Engine scene :

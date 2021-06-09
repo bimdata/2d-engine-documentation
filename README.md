@@ -1,6 +1,6 @@
 # 2D Engine Documentation :tada:
 
-https://bimdata.github.io/2d-engine-documentation/
+https://2d-engine.bimdata.io
 
 ## Development
 

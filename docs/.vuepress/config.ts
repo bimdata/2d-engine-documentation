@@ -7,7 +7,7 @@ export default defineUserConfig<DefaultThemeOptions>({
   title: '2D Engine',
   description: 'The official documentation for the BIMData.io 2D Engine.',
 
-  base: "/2d-engine-documentation/",
+  base: "/",
 
   head: [
     ['link', { rel: 'icon', href: '/assets/img/favicon.svg', type: "image/svg+xml" }],

@@ -8,7 +8,7 @@
     "docs:build": "vuepress build docs"
   },
   "author": "BIMData.io",
-  "license": "ISC",
+  "license": "Copyright BIMData.io",
   "devDependencies": {
     "vuepress": "2.0.0-beta.16"
   }

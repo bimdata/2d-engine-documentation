@@ -1,6 +1,10 @@
 <template>
   <div class="home">
     <h1>2D Engine Documentation</h1>
+    <div class="home__links">
+      <a href="guide">Guide</a>
+      <a href="reference">Reference</a>
+    </div>
     <div>
       The BIMData.io 2D Engine is a performant WebGL based 2D renderer that is able to draw from a simple lines to an entire building with a huge amount of object.
     </div>
@@ -29,5 +33,21 @@
 .home canvas {
       width: 400px;
     height: 400px;
+}
+
+.home__links {
+  display: flex;
+  justify-content: space-around;
+  max-width: 300px;
+  margin: auto;
+}
+
+.home__links a{
+  margin: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  min-width: 100px;
+  background-color: #f8c62d;
+  color: black;
 }
 </style>

@@ -17,22 +17,30 @@ const viewer = makeViewer({ canvas });
 | :---------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | `canvas`    | `HTMLCanvasElement` | **Required**.                                                                             |
 | `autoStart` | `boolean`           | **Default** = `true`. If false, you must call `viewer.ticker.start()` to start rendering. |
+| `select`    | `boolean`           | **Default** = `true`. If false, disabled the `select` layer.                              |
+| `highlight` | `boolean`           | **Default** = `true`. If false, disabled the `highlight` layer.                           |
+| `picking`   | `boolean`           | **Default** = `true`. If false, disabled the `picking` layer.                             |
+| `snap`      | `boolean`           | **Default** = `true`. If false, disabled the `snap` layer.                                |
 
 The factory returns the `viewer` with the following interface:
 
 ```typescript
-interface Viewer extends {
-  canvas: HTMLCanvasElement;
-  scene: Scene;
-  ui: UI;
-  camera: Camera;
+interface Viewer {
+  readonly canvas: HTMLCanvasElement;
+  readonly scene: Scene;
+  readonly camera: Camera;
   destroy(): void;
-  renderer: Renderer;
-  settings: Settings;
-  ticker: Ticker;
-  picker: Picker;
-  utils: {
-    vector2D: Vector2DUtils;
+  readonly renderer: Renderer;
+  readonly textureManager: TextureManager;
+  readonly styles: { default: Style; selected: Style; highlight: Style };
+  readonly settings: Settings;
+  readonly constants: Constants;
+  readonly picker: Picker;
+  readonly snapper: Snapper;
+  readonly ticker: Ticker;
+  readonly ui: UI;
+  readonly utils: {
+    readonly vector2D: Vector2DUtils;
   };
 }
 ```
@@ -46,8 +54,6 @@ It has the following interface:
 ```typescript
 interface Scene extends Readonly<EventHandler> {
   readonly viewer: Viewer;
-  readonly textureManager: TextureManager;
-  readonly styles: { default: Style; selected: Style; highlight: Style };
 
   // Models
   readonly models: Model[];
@@ -83,9 +89,25 @@ interface Scene extends Readonly<EventHandler> {
 }
 ```
 
-It also contains styles and the texture manager.
+### Events
 
-### Styles
+The following events are emitted by the 2D Engine scene :
+
+- "model-added", payload: the added model.
+- "model-removed", payload: the removed model.
+- "object-added", payload: the added object.
+- "object-removed", payload: the removed object.
+- "object-update", payload: { object, property, value?, oldValue? }. No value and oldValue for the "geometry" property.
+
+Events can be listened using `scene.on`:
+
+```javascript
+viewer.scene.on("model-added", (model) =>
+  console.log(`A model is loaded with the id ${model.id}`)
+);
+```
+
+## Styles
 
 Styles define how objects are drawn by default when they are visible, selected and highlighted. It can be customized by changing the default styles (WARNING: updating styles.default won't affect already loaded objects) or loading objects with non default style.
 
@@ -102,6 +124,20 @@ interface Style {
   lineColor?: number;
   lineOpacity?: number;
   lineDash?: number[];
+  lineCap?: LINE_CAP;
+  lineJoin?: LINE_JOIN;
+}
+
+enum LINE_CAP {
+  BUTT,
+  ROUND,
+  SQUARE,
+}
+
+enum LINE_JOIN {
+  BEVEL,
+  MITER,
+  ROUND,
 }
 ```
 
@@ -115,7 +151,7 @@ viewer.scene.styles.default.textureTint = 0xff0000; // For red. (RGB)
 
 `lineDash` is an array of numbers describing the dash pattern you want to use. See [here](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#parameters) for more informations.
 
-### Texture Manager
+## Texture Manager
 
 The Texture Manager has the following interface:
 
@@ -161,24 +197,44 @@ viewer.scene.textureManager.textureMatrix.rotate(30);
 
 <img :src="$withBase('/assets/img/wallTextureRotated.png')" alt="wall texture rotated" width="400" height="300"/>
 
-### Model and Objects
+## Model and Objects
 
-`model` and `object` have the following interfaces:
+### Model
+
+To add a model to the scene, use the `scene.addModel(modelData: ModelData)` method.
 
 ```typescript
-interface Model {
+interface ModelData {
+  readonly id?: string;
+  readonly objects?: SceneObjectData[];
+}
+
+interface Model extends Positionable, Transformable {
   readonly id: number;
   readonly scene: Scene;
   readonly objects: SceneObject[];
   addObject(objectData: SceneObjectData): SceneObject;
   removeObject(objectId: number): boolean;
+}
+```
 
-  // Related with its objects gemetries
-  readonly bounds: Bounds;
-  readonly center: Point;
+### Object
+
+To add object to the scene, you can use the `scene.addObject(objectData: ObjectData)` or the `model.addObject(objectData: ObjectData)` methods, or add it through models.
+
+```typescript
+interface SceneObjectData extends Style {
+  visible: boolean;
+  selected: boolean;
+  highlighted: boolean;
+  pickable: boolean;
+  readonly id?: string;
+  readonly zIndex?: number;
+  readonly pickingZIndex?: number;
+  readonly geometry?: GeometryData;
 }
 
-interface SceneObject {
+interface SceneObject extends Style, Positionable, Transformable {
   readonly id: number;
   readonly scene: Scene;
   readonly model: Model;
@@ -189,47 +245,30 @@ interface SceneObject {
   selected: boolean;
   highlighted: boolean;
   pickable: boolean;
-
-  // User custom properties
-  readonly uuid?: string;
-  readonly area?: number;
-  readonly zIndex?: number;
-  readonly type?: string;
 }
 ```
+
+Objects extends the [`Style`](#styles) interface. Each object style properties can be updated on the fly leading to a new render.
+
+```javascript
+object.lineWidth = 4;
+```
+### Geometry
 
 Objects have geometries. An object geometry have the following interface:
 
 ```typescript
-interface Geometry {
+type GeometryData = Array<number[] | LineData | ArcData>;
+
+interface ShapeData {
+  type?: ShapeType;
+}
+
+interface Geometry extends Positionable {
   readonly shapes: Shape[];
   getShape(index?: number): Shape | undefined;
   addShape(shape: ShapeData | PointsData, index?: number): Shape;
   removeShape(index?: number): Shape | undefined;
-  readonly bounds: Bounds;
-  readonly center: Point;
-}
-```
-
-The viewer handle two shape types: `line` and `arc`.
-
-```typescript
-interface Line {
-  readonly type: ShapeType.line;
-  readonly points: Point[];
-  getPoint(index?: number): Point | undefined;
-  addPoint(point: Point, index?: number): Point;
-  removePoint(index?: number): Point | undefined;
-}
-
-interface Arc {
-  readonly type: ShapeType.arc;
-  x: number;
-  y: number;
-  radius: number;
-  startAngle: number;
-  endAngle: number;
-  anticlockwise?: boolean;
 }
 ```
 
@@ -244,6 +283,7 @@ const model = viewer.scene.addModel({
         {
           type: "line", // another line
           points: [0, 50, 50, 0],
+          // poly: true // if poly = true, the shape is closed between the last point and the first.
         },
         {
           type: "arc", // a default arc => full circle
@@ -258,25 +298,80 @@ const model = viewer.scene.addModel({
 ```
 
 :::tip
-Geometries can be edited on the fly. To see how, [try it here](https://codepen.io/bimdata/pen/qBroOoW).
+Geometries can be edited on the fly. To see how, [try it here](https://codepen.io/kurtil/pen/qBXjRqK).
 :::
 
-### Events
+The viewer handle two shape types: `line` and `arc`.
 
-The following events are emitted by the 2D Engine scene :
+#### Line
 
-- "model-added", payload: the added model.
-- "model-removed", payload: the removed model.
-- "object-added", payload: the added object.
-- "object-removed", payload: the removed object.
-- "object-update", payload: { object, property, value?, oldValue? }. No value and oldValue for the "geometry" property.
+```typescript
+interface LineData extends ShapeData {
+  type: ShapeType.line;
+  points: PointsData;
+  poly?: boolean;
+}
 
-Events can be listened using `scene.on`:
+interface Line {
+  readonly type: ShapeType.line;
+  readonly points: Point[];
+  getPoint(index?: number): Point | undefined;
+  addPoint(point: Point, index?: number): Point;
+  removePoint(index?: number): Point | undefined;
+}
+```
 
-```javascript
-viewer.scene.on("model-added", model =>
-  console.log(`A model is loaded with the id ${model.id}`)
-);
+#### ARC
+
+```typescript
+interface ArcData extends ShapeData {
+  type: ShapeType.arc;
+  x: number;
+  y: number;
+  radius: number;
+  startAngle?: number; // (0 is at the 3 o'clock position of the arc's circle)
+  endAngle?: number;
+  anticlockwise?: boolean;
+  composite?: boolean; // default to `false`, `true` to be linked with the previous shape.
+}
+
+interface Arc {
+  readonly type: ShapeType.arc;
+  x: number;
+  y: number;
+  radius: number;
+  startAngle: number; // Degrees from the right of the arc.
+  endAngle: number; // Degrees from the right of the arc.
+  anticlockwise?: boolean;
+}
+```
+
+### Positionable & Transformable
+
+These APIs allows to get and update the position of the corresponding entity:
+
+```typescript
+type AABB = [minX: number, minY: number, maxX: number, maxY: number];
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Positionable {
+  aabb: AABB;
+  center: Point;
+}
+
+interface Transformable {
+  move(position: Point): void;
+  translate(dx: number, dy: number): void;
+  /**
+   * @param angle in degree, clockwise
+   * @param origin
+   */
+  rotate(angle: number, origin?: Point): void;
+  scale(ds: number, origin?: Point): void;
+}
 ```
 
 ## UI
@@ -294,11 +389,11 @@ The `camera` and the `picker` listen to the UI events. Disconnecting the UI will
 
 ### Events
 
-- "click", payload: { position, keys }
-- "right-click", payload: { position, keys }
-- "move", payload: { position, keys }
+- "click", payload: { canvasPosition, keys }
+- "right-click", payload: { canvasPosition, keys }
+- "move", payload: { canvasPosition, keys }
 - "drag", payload: { dx, dy, keys }
-- "scroll", payload: { position, dx, dy, keys }
+- "scroll", payload: { canvasPosition, dx, dy, keys }
 - "exit", no payload, when the mouse leave `el`.
 
 ## Camera
@@ -306,16 +401,78 @@ The `camera` and the `picker` listen to the UI events. Disconnecting the UI will
 The camera is binded on the mouse events. It has the following interface:
 
 ```typescript
-interface Camera extends Readonly<EventHandler> {
-  fitView(bbox: number[] | Bounds): void;
+/**
+ * A camera allows to see the world. Two coordinate systems can be manipulated using it:
+ * - the world coordinates, mentionned as `position`.
+ * - the canvas coordinates, mentionned as `canvasPosition`.
+ *
+ * A camera emits events:
+ * - "update", payload { MatrixExtended } : the camera transform. Emited when the camera is updated.
+ *
+ * To express the zoom level, the camera has two units:
+ * - zoom, expressed in percentages, as 100 times the scale.
+ * - scale ]0,+Infitiy[.
+ *
+ */
+interface Camera
+  extends Transformable,
+    Readonly<EventHandler<{ update: PIXITransform }>> {
+  fitView(
+    target: Scene | Scene[] | Model | Model[] | SceneObject | SceneObject[]
+  ): void;
+  destroy(): void;
   controller: CameraController;
-  translate(dx: number, dy: number): void;
-  scale(factor: number, position: Point): void;
-  rotate(angle: number, position: Point): void;
+  /**
+   * @param factor ]-Infinity, +Infinity[
+   * @param origin the zoom transform center.
+   */
+  zoomIn(factor?: number, origin?: Point): void;
+  /**
+   * @param factor ]-Infinity, +Infinity[
+   * @param origin the zoom transform center.
+   */
+  zoomOut(factor?: number, origin?: Point): void;
+  /**
+   * @param angle in degree clockwise.
+   * @param origin the rotation transform center.
+   */
   transform: PIXIMatrix;
-  getPosition(): Point;
-  getRotation(): number;
-  getScale(): Point;
+  position: Point;
+  /**
+   * @returns { number } the camera rotation angle in degree clockwise.
+   */
+  rotation: number;
+  /**
+   * @returns { number } ]-Infinity, +Infinity[
+   */
+  getScale(): number;
+  /**
+   * @returns { number } ]0, +Infinity[
+   */
+  zoom: number;
+  /**
+   * Returns the position of the given canvas position.
+   */
+  getPosition(canvasPosition: Point): Point;
+  /**
+   * Returns the canvas position of the given position.
+   */
+  getCanvasPosition(position: Point): Point;
+  getViewpoint(): Viewpoint;
+  setViewpoint(viewpoint: Viewpoint): Viewpoint;
+}
+
+interface Viewpoint {
+  x: number;
+  y: number;
+  /**
+   * degree clockwise
+   */
+  rotation: number;
+  /**
+   * ]-Infinity, +Infinity[
+   */
+  zoom: number;
 }
 ```
 
@@ -356,23 +513,56 @@ viewer.camera.controller.on("pick", ({ object }) => {
 });
 ```
 
+## Snapper
+
+The snapper allows to get a line vertex or edge position close to the given canvas position:
+
+```typescript
+interface Snapper {
+  getSnap(canvasPosition: Point, options?: SnapOptions): Point;
+}
+
+interface SnapOptions {
+  canvasDistance?: number; // default 20
+  snapVertices?: boolean; // default true
+  snapLines?: boolean; // default true
+}
+```
+
+Example to move a object close to another with the snap:
+
+```javascript
+const object = viewer.scene.addObject({ /* scene object data */});
+
+viewer.ui.on("move", ({ canvasPosition }) => {
+    const point = viewer.snapper.getSnap(canvasPosition);
+
+    object.move(point ?? viewer.camera.getPosition(canvasPosition));
+  });
+);
+```
+
 ## Settings
 
 Settings are predefined values/keys that define the 2D Engine behaviour. It has the following interface:
 
 ```typescript
-interface Settings extends Readonly<EventHandler> {
+interface Settings {
   rotateKey: string; // default "shift"
   scaleSpeed: number; // default 0.002
   rotateSpeed: number; // default 0.1
-  maxScale: number; // default 100
-  minScale: number; // default 0.1
-  fitViewRatio: number; // 1
-  pickingOrder: string; // default "area"
+  maxScale: number; // default 1000
+  minScale: number; // default 0.001
+  fitViewRatio: number; // default 0.9
+  snapMargin: number; // default 1
+  curves: {
+    adaptive: boolean;
+    maxLength: number;
+    maxSegments: number;
+    minSegments: number;
+  };
 }
 ```
-
-`pickingOrder` property only accept "area" or "zIndex". It represents the object property used to sort objects before draw and will influence the way objects can be picked.
 
 ## Ticker
 
@@ -405,3 +595,7 @@ interface Vector2DUtils {
   angle(v1: Vector2D, v2: Vector2D): number;
 }
 ```
+
+:::warning
+Angles are expressed in radians in `Vector2DUtils`.
+:::

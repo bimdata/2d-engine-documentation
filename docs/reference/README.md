@@ -258,7 +258,7 @@ object.lineWidth = 4;
 Objects have geometries. An object geometry have the following interface:
 
 ```typescript
-type GeometryData = Array<number[] | LineData | ArcData>;
+type GeometryData = Array<number[] | LineData | ArcData | CurveData>;
 
 interface ShapeData {
   type?: ShapeType;
@@ -301,7 +301,7 @@ const model = viewer.scene.addModel({
 Geometries can be edited on the fly. To see how, [try it here](https://codepen.io/kurtil/pen/qBXjRqK).
 :::
 
-The viewer handle two shape types: `line` and `arc`.
+The viewer handle three shape types: `line`, `arc` and `curve`.
 
 #### Line
 
@@ -321,7 +321,7 @@ interface Line {
 }
 ```
 
-#### ARC
+#### Arc
 
 ```typescript
 interface ArcData extends ShapeData {
@@ -344,6 +344,34 @@ interface Arc {
   endAngle: number; // Degrees from the right of the arc.
   anticlockwise?: boolean;
 }
+```
+
+#### Curve
+
+```typescript
+  interface CurveData extends ShapeData {
+    type: ShapeType.curve;
+    x: number;
+    y: number;
+    cpX1: number;
+    cpY1: number;
+    cpX2: number;
+    cpY2: number;
+    toX: number;
+    toY: number;
+  }
+
+  interface Curve extends Shape {
+    readonly type: ShapeType.curve;
+    x: number;
+    y: number;
+    cpX1: number;
+    cpY1: number;
+    cpX2: number;
+    cpY2: number;
+    toX: number;
+    toY: number;
+  }
 ```
 
 ### Positionable & Transformable

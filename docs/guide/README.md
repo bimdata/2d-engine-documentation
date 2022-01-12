@@ -20,7 +20,7 @@ import makeViewer from "@bimdata/2d-engine";
 ### script tag
 
 ```html
-<script src="https://www.unpkg.com/@bimdata/2d-engine@1.6.0-beta.2"></script>
+<script src="https://www.unpkg.com/@bimdata/2d-engine@1.6.0"></script>
 ```
 
 Add `makeViewer` available on the window object.
@@ -29,7 +29,7 @@ Or on script type module:
 
 ```html
 <script type="module">
-  import makeViewer from "https://www.unpkg.com/@bimdata/2d-engine@1.6.0-beta.2/dist/2d-engine.esm.js";
+  import makeViewer from "https://www.unpkg.com/@bimdata/2d-engine@1.6.0/dist/2d-engine.esm.js";
 
   // have fun
 </script>
@@ -57,7 +57,7 @@ This simple example shows how to load the engine with two simple objects and int
     <canvas id="canvas2d" style="width: 100vw; height: 100vh;"></canvas>
 
     <script type="module">
-      import makeViewer from "https://www.unpkg.com/@bimdata/2d-engine@1.6.0-beta.2/dist/2d-engine.esm.js";
+      import makeViewer from "https://www.unpkg.com/@bimdata/2d-engine@1.6.0/dist/2d-engine.esm.js";
 
       const canvas = document.getElementById("canvas2d");
 

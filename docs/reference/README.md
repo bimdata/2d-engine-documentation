@@ -253,15 +253,18 @@ Objects extends the [`Style`](#styles) interface. Each object style properties c
 ```javascript
 object.lineWidth = 4;
 ```
+
 ### Geometry
 
-Objects have geometries. An object geometry have the following interface:
+Objects have `geometry` and a `geometry` is an array of `shape`.
 
 ```typescript
-type GeometryData = Array<number[] | LineData | ArcData | CurveData>;
+type GeometryData = Array<number[] | LineData | ArcData | CurveData>;
 
 interface ShapeData {
   type?: ShapeType;
+  closePath: boolean; // If true, the path is closed after this shape and another path is opened for the following shapes. Equivalent of the svg command "Z".
+  startPath: boolean; // If true, a new path is started before drawing this shape.Equivalent of the svg command "M".
 }
 
 interface Geometry extends Positionable {
@@ -271,6 +274,57 @@ interface Geometry extends Positionable {
   removeShape(index?: number): Shape | undefined;
 }
 ```
+
+#### Path API
+
+By default, each shapes are drawn like a single path (linked together without stoping the drawing line). But this behaviour can be changed using the `startPath` and `closePath` booleans. The default value for `startPath` is `false` except for the first shape and the shapes that followed a shape with `closePath` at `true`. The default value for `closePath` is `false`.
+
+Here is an example of these APIs.
+
+```javascript
+const object =  {
+  geometry: [
+    {
+      type: "line",
+      points: [300, 0, 350, 50, 400, 0],
+      startPath: true,
+    },
+    {
+      type: "line",
+      points: [300, 50, 350, 100, 400, 50],
+      startPath: true,
+    },
+    {
+      type: "line",
+      points: [300, 100, 350, 150, 400, 100],
+      startPath: true,
+    },
+    {
+      type: "arc",
+      x: 350,
+      y: 250,
+      radius: 50,
+      startPath: true,
+      closePath: true,
+    },
+  ],
+  texture: "solid",
+  textureTint: 0xff0000,
+  textureOpacity: 0.5,
+};
+```
+
+This object is drawn like this:
+
+<img :src="$withBase('/assets/img/pathAPI_with.png')" alt="with path API" height="300"/>
+
+If the `startPath` propertiy is removed:
+
+<img :src="$withBase('/assets/img/pathAPI_without.png')" alt="without path API" height="300"/>
+
+In this example, the `closePath` property helps the drawing engine to correctly close the cirle.
+
+#### Add geometry
 
 When adding objects on a scene, shapes can be provide to object using the geometry property. By default, array of numbers will be displayed as lines.
 
@@ -349,29 +403,29 @@ interface Arc {
 #### Curve
 
 ```typescript
-  interface CurveData extends ShapeData {
-    type: ShapeType.curve;
-    x: number;
-    y: number;
-    cpX1: number;
-    cpY1: number;
-    cpX2: number;
-    cpY2: number;
-    toX: number;
-    toY: number;
-  }
+interface CurveData extends ShapeData {
+  type: ShapeType.curve;
+  x: number;
+  y: number;
+  cpX1: number;
+  cpY1: number;
+  cpX2: number;
+  cpY2: number;
+  toX: number;
+  toY: number;
+}
 
-  interface Curve extends Shape {
-    readonly type: ShapeType.curve;
-    x: number;
-    y: number;
-    cpX1: number;
-    cpY1: number;
-    cpX2: number;
-    cpY2: number;
-    toX: number;
-    toY: number;
-  }
+interface Curve extends Shape {
+  readonly type: ShapeType.curve;
+  x: number;
+  y: number;
+  cpX1: number;
+  cpY1: number;
+  cpX2: number;
+  cpY2: number;
+  toX: number;
+  toY: number;
+}
 ```
 
 ### Positionable & Transformable
